@@ -5,9 +5,6 @@ dist
 client/dist
 server/dist
 
-# Logs
-AuditLogs.jsx
-
 # Credentials & Environment Variables
 .env
 .env.local
