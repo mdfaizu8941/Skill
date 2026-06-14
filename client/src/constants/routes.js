@@ -1,0 +1,43 @@
+export const ROUTES = {
+  LANDING: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  STUDENT: {
+    DASHBOARD: '/student/dashboard',
+    PROFILE: '/student/profile',
+    SKILLS: '/student/skills',
+    CAREER_ROLES: '/student/career-roles',
+    GAP_ANALYSIS: '/student/gap-analysis',
+    ROADMAP: '/student/roadmap',
+    RESUME_PARSER: '/student/resume-parser',
+    NOTIFICATIONS: '/student/notifications',
+    BARTER: {
+      MARKETPLACE: '/student/barter/marketplace',
+      MY_SKILLS: '/student/barter/my-skills',
+      POST_SKILL: '/student/barter/post-skill',
+      EXCHANGES: '/student/barter/exchanges',
+      INBOX: '/student/barter/inbox',
+      CHAT: '/student/barter/chat',
+      RATINGS: '/student/barter/ratings',
+      ANALYTICS: '/student/barter/analytics',
+    },
+  },
+  MENTOR: {
+    DASHBOARD: '/mentor/dashboard',
+    EVIDENCE_REVIEW: '/mentor/evidence-review',
+    STUDENTS: '/mentor/students',
+    NOTIFICATIONS: '/mentor/notifications',
+  },
+  OFFICER: {
+    DASHBOARD: '/officer/dashboard',
+    ANALYTICS: '/officer/analytics',
+    REPORTS: '/officer/reports',
+    STUDENT_SEARCH: '/officer/student-search',
+  },
+  ADMIN: {
+    DASHBOARD: '/admin/dashboard',
+    USERS: '/admin/users',
+    AUDIT_LOGS: '/admin/audit-logs',
+    ROLE_CATALOG: '/admin/role-catalog',
+  },
+}

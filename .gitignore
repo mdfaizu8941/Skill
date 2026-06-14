@@ -1,0 +1,39 @@
+node_modules
+client/node_modules
+server/node_modules
+dist
+client/dist
+server/dist
+
+# Logs
+AuditLogs.jsx
+
+# Credentials & Environment Variables
+.env
+.env.local
+*.env
+*.env.*
+*.key
+*.pem
+client/.env
+server/.env
+client/.env.local
+server/.env.local
+server/src/utils/seed.js
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Temporary files & Source dumps
+*all_src.txt
+*.pdf
+*.docx
+*.xlsx
+
+report.md
