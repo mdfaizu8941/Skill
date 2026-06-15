@@ -1,5 +1,6 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import CareerRole from '../models/CareerRole.js';
+import { audit } from '../services/auditService.js';
 
 export const getAll = asyncHandler(async (req, res) => {
   const roles = await CareerRole.find({ isActive: true })
@@ -24,6 +25,16 @@ export const create = asyncHandler(async (req, res) => {
     createdBy: req.user.id,
   });
 
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'CAREER_ROLE_CREATED',
+    targetId: role._id,
+    targetModel: 'CareerRole',
+    metadata: { title: role.title, industry: role.industry, skillCount: role.requiredSkills?.length || 0 },
+    ip: req.ip || 'unknown'
+  });
+
   return res.status(201).json({ role });
 });
 
@@ -46,6 +57,16 @@ export const update = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Career role not found' });
   }
 
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'CAREER_ROLE_UPDATED',
+    targetId: role._id,
+    targetModel: 'CareerRole',
+    metadata: { title: role.title },
+    ip: req.ip || 'unknown'
+  });
+
   return res.json({ role });
 });
 
@@ -59,6 +80,16 @@ export const softDelete = asyncHandler(async (req, res) => {
   if (!role) {
     return res.status(404).json({ message: 'Career role not found' });
   }
+
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'CAREER_ROLE_DELETED',
+    targetId: req.params.id,
+    targetModel: 'CareerRole',
+    metadata: { title: role.title },
+    ip: req.ip || 'unknown'
+  });
 
   return res.json({ message: 'Career role deactivated', role });
 });

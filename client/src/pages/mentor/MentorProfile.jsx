@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { useState, useEffect } from 'react'
-import { Save, Camera, Upload, Users, Calendar, Link as LinkedinIcon } from 'lucide-react'
+import { Save, Camera, Upload, Trash2, Users, Calendar, Link as LinkedinIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Card, { CardHeader } from '../../components/ui/Card'
 import Input from '../../components/ui/Input'
@@ -10,7 +10,7 @@ import Badge from '../../components/ui/Badge'
 import Loader from '../../components/common/Loader'
 import ErrorMessage from '../../components/common/ErrorMessage'
 import { useAuth } from '../../context/AuthContext'
-import { getMyProfile, updateMyProfile, uploadAvatar } from '../../services/profileService'
+import { getMyProfile, updateMyProfile, uploadAvatar, deleteAvatar } from '../../services/profileService'
 import api from '../../services/api'
 
 export default function MentorProfile() {
@@ -25,6 +25,7 @@ export default function MentorProfile() {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [deletingAvatar, setDeletingAvatar] = useState(false)
 
   const {
     register,
@@ -117,6 +118,23 @@ export default function MentorProfile() {
     }
   }
 
+  const handleDeleteAvatar = async () => {
+    if (!window.confirm('Are you sure you want to delete your avatar?')) return
+    
+    setDeletingAvatar(true)
+    try {
+      await deleteAvatar()
+      setProfile({ ...profile, avatarUrl: '' })
+      setAvatarFile(null)
+      setAvatarPreview(null)
+      toast.success('Avatar deleted successfully!')
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Delete failed')
+    } finally {
+      setDeletingAvatar(false)
+    }
+  }
+
   const getInitials = (name) => {
     if (!name) return 'M'
     return name
@@ -185,6 +203,18 @@ export default function MentorProfile() {
                 >
                   <Upload className="w-4 h-4" />
                   Upload Avatar
+                </Button>
+              )}
+              {profile?.avatarUrl && !avatarFile && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={handleDeleteAvatar}
+                  loading={deletingAvatar}
+                  className="w-full"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Avatar
                 </Button>
               )}
             </div>

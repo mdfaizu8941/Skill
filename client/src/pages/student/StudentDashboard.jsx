@@ -21,7 +21,7 @@ export default function StudentDashboard() {
 
     const summary = summaryRes.status === 'fulfilled' ? summaryRes.value.data.summary : {}
     const reports = reportsRes.status === 'fulfilled' ? reportsRes.value.data.reports : []
-    const roadmap = roadmapRes.status === 'fulfilled' ? roadmapRes.value.data.roadmap : null
+    const roadmap = roadmapRes.status === 'fulfilled' ? roadmapRes.value.data.roadmaps?.[0] : null
 
     // Calculate gap score from latest report
     const latestReport = reports?.length > 0 ? reports[0] : null
@@ -29,8 +29,8 @@ export default function StudentDashboard() {
 
     // Calculate roadmap progress
     let roadmapProgress = 0
-    if (roadmap && roadmap.steps && roadmap.steps.length > 0) {
-      const roadmap = roadmapRes.status === 'fulfilled' ? roadmapRes.value.data.roadmaps?.[0] : null
+    if (roadmap?.steps?.length > 0) {
+      const completed = roadmap.steps.filter(s => s.status === 'completed').length
       roadmapProgress = Math.round((completed / roadmap.steps.length) * 100)
     }
 

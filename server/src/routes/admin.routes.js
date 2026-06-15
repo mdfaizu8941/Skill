@@ -4,9 +4,11 @@ import { permit } from '../middleware/rbac.js';
 import { auditLogger } from '../middleware/auditLogger.js';
 import * as adminController from '../controllers/admin.controller.js';
 
-const router = Router();
 
+const router = Router();
+router.get('/stats', requireAuth, permit('Admin'), adminController.getDashboardStats)
 router.get('/users', requireAuth, permit('Admin'), adminController.getUsers);
+
 router.patch(
   '/users/:id/role',
   requireAuth,

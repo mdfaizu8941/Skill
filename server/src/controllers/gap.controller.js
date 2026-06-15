@@ -9,6 +9,7 @@ import {
   extractSkillsFromJD,
 } from '../services/groqService.js'
 import { createNotification } from '../services/notificationService.js'
+import { audit } from '../services/auditService.js'
 
 export const analyse = asyncHandler(async (req, res) => {
   const { careerRoleId, targetRole, jobDescription, mode } = req.body
@@ -83,6 +84,22 @@ export const analyse = asyncHandler(async (req, res) => {
     title: 'Gap Analysis Complete',
     message: `Your gap analysis for "${roleTitle}" is ready. Compatibility: ${compatibilityScore}%`,
     link: '/student/gap-analysis'
+  })
+
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'GAP_ANALYSIS_RUN',
+    targetId: report._id,
+    targetModel: 'GapReport',
+    metadata: {
+      targetRole: roleTitle,
+      mode: mode || 'role',
+      compatibilityScore: compatibilityScore,
+      matchedCount: matchedSkills.length,
+      missingCount: missingSkills.length
+    },
+    ip: req.ip || 'unknown'
   })
 
   res.json(report)

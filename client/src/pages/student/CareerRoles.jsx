@@ -19,7 +19,8 @@ export default function CareerRoles() {
     const fetchRoles = async () => {
       try {
         const { data } = await api.get('/career-roles')
-        setRoles(data.careerRoles || [])
+        setRoles(data.roles || [])
+
       } catch (err) {
         setError('Failed to load career roles.')
       } finally {
@@ -78,7 +79,7 @@ export default function CareerRoles() {
                   <h4 className="text-xs font-medium text-slate-500 dark:text-slate-500 uppercase tracking-wider mb-2">Required Skills</h4>
                   <div className="flex flex-wrap gap-2">
                     {role.requiredSkills?.slice(0, 5).map((skill, idx) => (
-                      <Badge key={idx} variant="default">{skill.title}</Badge>
+                      <Badge key={idx} variant="default">{skill.skillName}</Badge>
                     ))}
                     {role.requiredSkills?.length > 5 && (
                       <Badge variant="default">+{role.requiredSkills.length - 5} more</Badge>
@@ -87,7 +88,7 @@ export default function CareerRoles() {
                 </div>
               </div>
               <div className="pt-4 mt-auto border-t border-slate-100 dark:border-slate-800">
-                <Link to="/student/gap-analysis">
+                <Link to="/student/gap-analysis" state={{ selectedRole: role.title, roleId: role._id }}>
                   <Button variant="ghost" fullWidth className="justify-between">
                     <span>Analyze Match</span>
                     <ArrowRight className="w-4 h-4" />

@@ -21,8 +21,8 @@ const getParticipantKey = (userA, userB) => [toId(userA), toId(userB)].sort().jo
 
 const populateMessage = (query) =>
   query
-    .populate('sender', 'name email profilePic')
-    .populate('receiver', 'name email profilePic');
+    .populate('sender', 'name email profilePic avatarUrl')
+    .populate('receiver', 'name email profilePic avatarUrl');
 
 const getOrCreateConversation = async (userId, peerId) => {
   const participantKey = getParticipantKey(userId, peerId);
@@ -43,7 +43,7 @@ const getOrCreateConversation = async (userId, peerId) => {
       },
     },
     { new: true, upsert: true }
-  ).populate('participants', 'name email profilePic bio institution');
+  ).populate('participants', 'name email profilePic avatarUrl bio institution');
 };
 
 const getConversationUnreadCount = (conversation, userId) => {
@@ -82,7 +82,16 @@ const updateConversationAfterMessage = async (senderId, receiverId, preview, sen
     toId(item.user) === receiverId ? { user: item.user, count: (item.count || 0) + 1 } : item
   ));
 
-  await conversation.save();
+  await Conversation.updateOne(
+    { _id: conversation._id },
+    {
+      $set: {
+        lastMessage: conversation.lastMessage,
+        lastMessageAt: conversation.lastMessageAt,
+        unreadCounts: conversation.unreadCounts,
+      },
+    }
+  );
   return conversation;
 };
 
@@ -94,7 +103,12 @@ const resetConversationUnread = async (userId, peerId) => {
     toId(item.user) === userId ? { user: item.user, count: 0 } : item
   ));
 
-  await conversation.save();
+  await Conversation.updateOne(
+    { _id: conversation._id },
+    {
+      $set: { unreadCounts: conversation.unreadCounts },
+    }
+  );
   return conversation;
 };
 
@@ -142,7 +156,7 @@ export const listConversations = async (req, res, next) => {
         .sort({ createdAt: -1 })
         .lean(),
       Conversation.find({ participants: userObjectId })
-        .populate('participants', 'name email profilePic bio institution')
+        .populate('participants', 'name email profilePic avatarUrl bio institution')
         .sort({ lastMessageAt: -1 }),
     ]);
 
@@ -196,7 +210,7 @@ export const listConversations = async (req, res, next) => {
       .filter((conversation) => !conversation.peer && conversation.peerId)
       .map((conversation) => conversation.peerId);
     const peers = await User.find({ _id: { $in: missingPeerIds } })
-      .select('name email profilePic bio institution')
+      .select('name email profilePic avatarUrl bio institution')
       .lean();
     const peersById = new Map(peers.map((peer) => [toId(peer._id), peer]));
 
@@ -246,7 +260,7 @@ export const searchChatUsers = async (req, res, next) => {
         { _id: { $in: skillMatches.map((skill) => skill.user) } },
       ],
     })
-      .select('name email profilePic bio institution')
+      .select('name email profilePic avatarUrl bio institution')
       .limit(12)
       .lean();
 

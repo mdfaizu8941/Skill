@@ -4,6 +4,7 @@ import User from '../models/User.js'
 import StudentProfile from '../models/StudentProfile.js'
 import Skill from '../models/Skill.js'
 import { createNotification } from '../services/notificationService.js'
+import { audit } from '../services/auditService.js'
 
 // GET /api/mentors — Student browses available mentors
 export const getMentors = asyncHandler(async (req, res) => {
@@ -69,6 +70,19 @@ export const sendRequest = asyncHandler(async (req, res) => {
     link: '/mentor/requests'
   })
   
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'MENTOR_REQUEST_SENT',
+    targetId: request._id,
+    targetModel: 'MentorRequest',
+    metadata: {
+      mentorId: mentorId,
+      mentorName: mentor.name
+    },
+    ip: req.ip || 'unknown'
+  })
+  
   res.status(201).json({ request })
 })
 
@@ -117,6 +131,19 @@ export const respondToRequest = asyncHandler(async (req, res) => {
       ? `Your mentorship request has been accepted. You now have a mentor assigned.`
       : `Your mentorship request was declined. ${mentorNote ? 'Note: ' + mentorNote : ''}`,
     link: '/student/profile'
+  })
+  
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: status === 'accepted' ? 'MENTOR_REQUEST_ACCEPTED' : 'MENTOR_REQUEST_DECLINED',
+    targetId: request._id,
+    targetModel: 'MentorRequest',
+    metadata: {
+      studentId: request.studentId?.toString(),
+      mentorNote: mentorNote || ''
+    },
+    ip: req.ip || 'unknown'
   })
   
   res.json({ request })

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { audit } from '../services/auditService.js';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 
@@ -73,6 +74,17 @@ export const register = async (req, res, next) => {
     });
 
     const token = createToken(user);
+
+    await audit({
+      actorId: user._id,
+      actorRole: user.role,
+      action: 'USER_REGISTERED',
+      targetId: user._id,
+      targetModel: 'User',
+      metadata: { name: user.name, email: user.email, role: user.role },
+      ip: req.ip || 'unknown'
+    });
+
     return res.status(201).json({ 
       token, 
       user: {
@@ -159,6 +171,16 @@ export const login = async (req, res, next) => {
     await user.save();
 
     const token = createToken(user);
+
+    await audit({
+      actorId: user._id,
+      actorRole: user.role,
+      action: 'USER_LOGIN',
+      targetId: user._id,
+      targetModel: 'User',
+      metadata: { email: user.email, role: user.role },
+      ip: req.ip || 'unknown'
+    });
     return res.json({ token, user: publicUser(user) });
   } catch (error) {
     return next(error);

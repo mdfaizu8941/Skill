@@ -8,6 +8,7 @@ import { useAuth } from '../../../context/AuthContext'
 import Card, { CardHeader } from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Badge from '../../../components/ui/Badge'
+import ProfileModal from '../../../components/common/ProfileModal'
 
 const toId = (v) => { if (!v) return ''; if (v._id) return v._id; if (v.id) return v.id; return v }
 const fmtTime = (v) => { if (!v) return ''; const d = new Date(v); const t = new Date(); return d.toDateString() === t.toDateString() ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) }
@@ -26,6 +27,7 @@ export default function ChatPage() {
   const [searchResults, setSearchResults] = useState([])
   const [error, setError] = useState('')
   const [navHandled, setNavHandled] = useState(false)
+  const [profileModalOpen, setProfileModalOpen] = useState(false)
   
   const socketRef = useRef(null)
 
@@ -35,24 +37,8 @@ export default function ChatPage() {
   const markRead = useCallback(async (id) => { if (id) await api.patch(`/messages/conversations/${id}/read`) }, [])
   const loadMessages = useCallback(async (id) => { if (!id) { setMessages([]); return }; const { data } = await api.get('/messages', { params: { otherUserId: id } }); setMessages(data.messages || []) }, [])
 
-  // Initialize Socket.io
-  useEffect(() => {
-    if (!token) return
-    const socketUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || window.location.origin
-    socketRef.current = io(socketUrl, { auth: { token } })
-    
-    socketRef.current.on('newMessage', (msg) => {
-      setMessages(prev => {
-        if (prev.some(m => m._id === msg._id)) return prev
-        return [...prev, msg]
-      })
-      loadConversations()
-    })
-
-    return () => {
-      if (socketRef.current) socketRef.current.disconnect()
-    }
-  }, [token, loadConversations])
+  // Socket.io is not implemented on the backend yet.
+  // The page already uses HTTP polling every 10 seconds below, so chat will still work!
 
   const openConversation = async (conv) => {
     const nid = toId(conv.peer); if (!nid) return
@@ -103,7 +89,7 @@ export default function ChatPage() {
             {searchResults.map((r) => (
               <div key={r._id} className="flex items-center justify-between p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 <div className="flex items-center gap-3">
-                  <img src={r.profilePic || `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(r.name || 'User')}`} alt="" className="w-9 h-9 rounded-full" />
+                  <img src={r.avatarUrl || r.profilePic || `https://api.dicebear.com/8.x/initials/svg?seed=${encodeURIComponent(r.name || 'User')}`} alt="" className="w-9 h-9 rounded-full" />
                   <div><p className="text-sm font-medium text-slate-900 dark:text-slate-200">{r.name || 'User'}</p><p className="text-xs text-slate-500">{r.email}</p></div>
                 </div>
                 <Button size="sm" onClick={() => startChat(r)}>Chat</Button>
@@ -127,7 +113,28 @@ export default function ChatPage() {
         </Card>
 
         <Card className="flex flex-col p-0 h-[600px]" noPadding>
-          <div className="p-4 border-b border-slate-100 dark:border-slate-800 shrink-0"><h2 className="font-semibold text-slate-900 dark:text-slate-200">{activeConv?.peer?.name || 'Select a conversation'}</h2></div>
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+            {activeConv?.peer ? (
+              <button 
+                onClick={() => setProfileModalOpen(true)}
+                className="flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 p-2 -m-2 rounded-lg transition-colors text-left max-w-full"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0">
+                  {activeConv.peer.avatarUrl || activeConv.peer.profilePic ? (
+                    <img src={activeConv.peer.avatarUrl || activeConv.peer.profilePic} alt={activeConv.peer.name} className="w-full h-full object-cover" />
+                  ) : (
+                    activeConv.peer.name?.charAt(0)?.toUpperCase() || 'U'
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-slate-900 dark:text-slate-200 truncate">{activeConv.peer.name}</h2>
+                  <p className="text-xs text-slate-500">Click to view profile</p>
+                </div>
+              </button>
+            ) : (
+              <h2 className="font-semibold text-slate-900 dark:text-slate-200">Select a conversation</h2>
+            )}
+          </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length > 0 ? messages.map((m) => { const mine = m.sender?._id === currentUserId || m.sender?.id === currentUserId; return (
               <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
@@ -148,6 +155,12 @@ export default function ChatPage() {
           </form>
         </Card>
       </div>
+
+      <ProfileModal 
+        isOpen={profileModalOpen} 
+        onClose={() => setProfileModalOpen(false)} 
+        userId={activeConv?.peer?._id || activeConv?.peer?.id} 
+      />
     </motion.div>
   )
 }

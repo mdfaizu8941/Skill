@@ -134,3 +134,43 @@ export const getAuditLogs = asyncHandler(async (req, res) => {
     },
   });
 });
+export const getDashboardStats = asyncHandler(async (req, res) => {
+  const Exchange = (await import('../models/Exchange.js')).default
+  const CareerRole = (await import('../models/CareerRole.js')).default
+  const GapReport = (await import('../models/GapReport.js')).default
+  const Roadmap = (await import('../models/Roadmap.js')).default
+
+  const [
+    totalUsers,
+    totalStudents,
+    totalMentors,
+    totalOfficers,
+    activeExchanges,
+    totalCareerRoles,
+    totalGapReports,
+    totalRoadmaps,
+    recentLogs
+  ] = await Promise.all([
+    User.countDocuments({ isActive: true }),
+    User.countDocuments({ role: 'Student', isActive: true }),
+    User.countDocuments({ role: 'Mentor', isActive: true }),
+    User.countDocuments({ role: 'PlacementOfficer', isActive: true }),
+    Exchange.countDocuments({ status: 'active' }),
+    CareerRole.countDocuments({ isActive: true }),
+    GapReport.countDocuments(),
+    Roadmap.countDocuments({ overallStatus: 'active' }),
+    AuditEvent.find().sort({ timestamp: -1 }).limit(5).populate('actorId', 'name email').lean()
+  ])
+
+  res.json({
+    totalUsers,
+    totalStudents,
+    totalMentors,
+    totalOfficers,
+    activeExchanges,
+    totalCareerRoles,
+    totalGapReports,
+    totalRoadmaps,
+    recentLogs
+  })
+})

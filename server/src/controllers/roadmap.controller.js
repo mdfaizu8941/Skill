@@ -3,6 +3,7 @@ import Roadmap from '../models/Roadmap.js';
 import GapReport from '../models/GapReport.js';
 import { generateRoadmap as generateRoadmapAI } from '../services/groqService.js';
 import { createNotification } from '../services/notificationService.js';
+import { audit } from '../services/auditService.js';
 
 export const generate = asyncHandler(async (req, res) => {
   const { gapReportId } = req.body;
@@ -50,6 +51,20 @@ export const generate = asyncHandler(async (req, res) => {
     title: 'Roadmap Generated',
     message: `Your personalized learning roadmap has been created.`,
     link: '/student/roadmap'
+  })
+
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'ROADMAP_GENERATED',
+    targetId: roadmap._id,
+    targetModel: 'Roadmap',
+    metadata: {
+      gapReportId: gapReportId,
+      stepCount: steps.length,
+      careerRoleTitle: careerRoleTitle
+    },
+    ip: req.ip || 'unknown'
   })
 
   return res.status(201).json({ roadmap });

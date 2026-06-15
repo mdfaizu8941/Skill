@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
+
 import {
   Target,
   FileText,
@@ -24,6 +25,7 @@ import { generateRoadmap } from '../../services/roadmapService'
 
 export default function GapAnalysis() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [mode, setMode] = useState('role')
   const [quickRoles, setQuickRoles] = useState([])
   const [targetRole, setTargetRole] = useState('')
@@ -41,12 +43,17 @@ export default function GapAnalysis() {
     fetchQuickRoles()
     fetchHistory()
   }, [])
+  useEffect(() => {
+  if (location.state?.selectedRole) {
+    setTargetRole(location.state.selectedRole)
+    setMode('role')
+  }
+}, [location.state])
 
   const fetchQuickRoles = async () => {
     try {
       const { data } = await api.get('/career-roles')
-      setQuickRoles((data.careerRoles || []).slice(0, 5))
-    } catch (err) {
+      setQuickRoles((data.roles || []).slice(0, 5))    } catch (err) {
       console.error('Failed to load quick roles')
     }
   }

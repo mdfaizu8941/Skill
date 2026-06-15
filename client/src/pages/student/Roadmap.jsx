@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Map, CheckCircle2, Circle, ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -11,29 +11,52 @@ import ErrorMessage from '../../components/common/ErrorMessage'
 
 export default function Roadmap() {
   const [updating, setUpdating] = useState(null)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [roadmap, setRoadmap] = useState(null)
 
-  const { data, loading, error, reload } = useAsync(async () => {
+  const { data: roadmaps, loading, error, reload } = useAsync(async () => {
     const { data } = await api.get('/roadmap/my')
-    return data.roadmaps?.[0] || null
+    return data.roadmaps || []
   }, [])
 
+  useEffect(() => {
+    if (roadmaps && roadmaps.length > 0) {
+      setRoadmap(roadmaps[selectedIndex] || roadmaps[0])
+    } else if (roadmaps && roadmaps.length === 0) {
+      setRoadmap(null)
+    }
+  }, [roadmaps, selectedIndex])
+
   const handleToggleStep = async (stepId, currentStatus) => {
+    const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
+    
+    // optimistic update — update UI immediately without refetch
+    setRoadmap(prev => ({
+      ...prev,
+      steps: prev.steps?.map(s => 
+        s._id === stepId ? { ...s, status: newStatus } : s
+      )
+    }))
+    
     try {
       setUpdating(stepId)
-      const newStatus = currentStatus === 'completed' ? 'pending' : 'completed'
       await api.patch(`/roadmap/steps/${stepId}`, { status: newStatus })
-      reload()
     } catch (err) {
+      // revert on failure
+      setRoadmap(prev => ({
+        ...prev,
+        steps: prev.steps?.map(s =>
+          s._id === stepId ? { ...s, status: currentStatus } : s
+        )
+      }))
       console.error(err)
     } finally {
       setUpdating(null)
     }
   }
 
-  if (loading) return <Loader />
+  if (loading && !roadmap) return <Loader />
   if (error) return <ErrorMessage message={error} onRetry={reload} />
-
-  const roadmap = data
 
   return (
     <motion.div
@@ -48,6 +71,24 @@ export default function Roadmap() {
           Your personalized path to mastering your target role.
         </p>
       </div>
+
+      {roadmaps && roadmaps.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {roadmaps.map((rm, idx) => (
+            <button
+              key={rm._id}
+              onClick={() => setSelectedIndex(idx)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                selectedIndex === idx 
+                  ? 'bg-brand-500 text-white shadow-md' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
+              }`}
+            >
+              🎯 {rm.careerRoleId?.title || 'Target Role'}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!roadmap ? (
         <Card className="text-center py-16">

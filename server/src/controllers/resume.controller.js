@@ -1,6 +1,7 @@
 import { createRequire } from 'module'
 import { asyncHandler } from '../utils/asyncHandler.js'
 import { extractSkillsFromResume } from '../services/groqService.js'
+import { audit } from '../services/auditService.js'
 
 const require = createRequire(import.meta.url)
 const PDFParser = require('pdf2json')
@@ -36,5 +37,19 @@ export const parseResume = asyncHandler(async (req, res) => {
   }
 
   const skills = await extractSkillsFromResume(text)
+
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'RESUME_PARSED',
+    targetId: req.user.id,
+    targetModel: 'User',
+    metadata: {
+      skillsExtracted: skills.length,
+      fileName: req.file?.originalname || 'unknown'
+    },
+    ip: req.ip || 'unknown'
+  })
+
   res.json({ skills })
 })

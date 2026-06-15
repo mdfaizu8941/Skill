@@ -57,9 +57,31 @@ app.use('/api/mentor', mentorRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api', mentorRequestRoutes);
 
+import AuditEvent from './models/AuditEvent.js';
+
 // Global error handler
-app.use((err, _req, res, _next) => {
+app.use(async (err, req, res, _next) => {
   const status = err.status || 500;
+  
+  // Only log actual crashes (5xx errors), ignore 400 Bad Requests, 401 Unauthorized, etc.
+  if (status >= 500) {
+    try {
+      await AuditEvent.create({
+        action: 'SYSTEM_ERROR',
+        actorRole: 'System',
+        metadata: {
+          error: err.message,
+          stack: err.stack,
+          path: req.originalUrl,
+          method: req.method
+        },
+        ip: req.ip || 'unknown'
+      });
+    } catch (e) {
+      console.error('Failed to log error to AuditEvent:', e);
+    }
+  }
+
   res.status(status).json({ message: err.message || 'Server error' });
 });
 

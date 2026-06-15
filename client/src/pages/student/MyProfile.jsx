@@ -11,7 +11,7 @@ import Badge from '../../components/ui/Badge'
 import Loader from '../../components/common/Loader'
 import ErrorMessage from '../../components/common/ErrorMessage'
 import { useAuth } from '../../context/AuthContext'
-import { getMyProfile, updateMyProfile, uploadAvatar } from '../../services/profileService'
+import { getMyProfile, updateMyProfile, uploadAvatar, deleteAvatar } from '../../services/profileService'
 import { getMySkills, createSkill, deleteSkill } from '../../services/skillService'
 import api from '../../services/api'
 
@@ -28,6 +28,7 @@ export default function MyProfile() {
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [deletingAvatar, setDeletingAvatar] = useState(false)
   
   // Skill modal state
   const [isSkillModalOpen, setIsSkillModalOpen] = useState(false)
@@ -61,7 +62,10 @@ export default function MyProfile() {
         getMyProfile(),
         getMySkills(),
       ])
-      setProfile(profileRes.data.profile)
+      setProfile({
+        ...profileRes.data.profile,
+        avatar: profileRes.data.user?.avatarUrl || profileRes.data.user?.profilePic
+      })
       setSkills(skillsRes.data.skills || [])
       
       // Fetch mentor if assigned
@@ -136,6 +140,23 @@ export default function MyProfile() {
       toast.error(err?.response?.data?.message || 'Upload failed')
     } finally {
       setUploadingAvatar(false)
+    }
+  }
+
+  const handleDeleteAvatar = async () => {
+    if (!window.confirm('Are you sure you want to delete your avatar?')) return
+    
+    setDeletingAvatar(true)
+    try {
+      await deleteAvatar()
+      setProfile({ ...profile, avatar: '' })
+      setAvatarFile(null)
+      setAvatarPreview(null)
+      toast.success('Avatar deleted successfully!')
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Delete failed')
+    } finally {
+      setDeletingAvatar(false)
     }
   }
 
@@ -245,6 +266,18 @@ export default function MyProfile() {
                 >
                   <Upload className="w-4 h-4" />
                   Upload Avatar
+                </Button>
+              )}
+              {profile?.avatar && !avatarFile && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={handleDeleteAvatar}
+                  loading={deletingAvatar}
+                  className="w-full"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Avatar
                 </Button>
               )}
             </div>

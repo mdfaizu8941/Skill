@@ -3,6 +3,7 @@ import SkillEvidence from '../models/SkillEvidence.js';
 import StudentProfile from '../models/StudentProfile.js';
 import AuditEvent from '../models/AuditEvent.js';
 import { createNotification } from '../services/notificationService.js';
+import { audit } from '../services/auditService.js';
 
 export const submit = asyncHandler(async (req, res) => {
   const { skillId, type, externalLink } = req.body;
@@ -33,6 +34,20 @@ export const submit = asyncHandler(async (req, res) => {
     status: 'pending',
     mentorId,
   });
+
+  await audit({
+    actorId: req.user.id,
+    actorRole: req.user.role,
+    action: 'SKILL_EVIDENCE_SUBMITTED',
+    targetId: evidence._id,
+    targetModel: 'SkillEvidence',
+    metadata: {
+      skillId: skillId,
+      type: type,
+      mentorId: mentorId?.toString() || null
+    },
+    ip: req.ip || 'unknown'
+  })
 
   return res.status(201).json({ evidence });
 });

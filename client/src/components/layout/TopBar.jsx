@@ -172,8 +172,12 @@ export default function TopBar({ onMenuClick }) {
             onClick={() => setDropdownOpen((prev) => !prev)}
             className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold">
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold overflow-hidden">
+              {user?.avatarUrl || user?.profilePic ? (
+                <img src={user.avatarUrl || user.profilePic} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                user?.name?.charAt(0)?.toUpperCase() || 'U'
+              )}
             </div>
           </button>
 
