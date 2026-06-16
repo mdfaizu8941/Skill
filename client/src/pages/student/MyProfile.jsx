@@ -85,6 +85,9 @@ export default function MyProfile() {
         university: profileRes.data.profile?.university || '',
         enrollmentYear: profileRes.data.profile?.enrollmentYear || '',
         graduationYear: profileRes.data.profile?.graduationYear || '',
+        branch: profileRes.data.profile?.branch || '',
+        year: profileRes.data.profile?.year || '',
+        cgpa: profileRes.data.profile?.cgpa || '',
     })
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load profile')
@@ -102,6 +105,9 @@ export default function MyProfile() {
       university: data.university,
       enrollmentYear: data.enrollmentYear,
       graduationYear: data.graduationYear,
+      branch: data.branch,
+      year: data.year,
+      cgpa: data.cgpa,
     })
     toast.success('Profile updated successfully!')
   } catch (err) {
@@ -372,6 +378,35 @@ export default function MyProfile() {
                       value: /^\d{4}$/,
                       message: 'Must be a 4-digit year',
                     },
+                  })}
+                />
+              </div>
+              <Input
+                label="Branch/Department"
+                placeholder="e.g. Computer Science"
+                error={errors.branch?.message}
+                {...register('branch')}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Current Year"
+                  type="number"
+                  placeholder="1-6"
+                  error={errors.year?.message}
+                  {...register('year', {
+                    min: { value: 1, message: 'Min year is 1' },
+                    max: { value: 6, message: 'Max year is 6' }
+                  })}
+                />
+                <Input
+                  label="CGPA"
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00-10.00"
+                  error={errors.cgpa?.message}
+                  {...register('cgpa', {
+                    min: { value: 0, message: 'Min CGPA is 0' },
+                    max: { value: 10, message: 'Max CGPA is 10' }
                   })}
                 />
               </div>

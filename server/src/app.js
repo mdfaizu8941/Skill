@@ -18,6 +18,7 @@ import adminRoutes from './routes/admin.routes.js';
 import mentorRoutes from './routes/mentor.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import mentorRequestRoutes from './routes/mentorRequest.routes.js';
+import officerRoutes from './routes/officer.routes.js';
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/resume', resumeRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/mentor', mentorRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/officer', officerRoutes);
 app.use('/api', mentorRequestRoutes);
 
 import AuditEvent from './models/AuditEvent.js';

@@ -10,6 +10,8 @@ const notificationSchema = new mongoose.Schema({
       'MENTOR_ASSIGNED',
       'GAP_ANALYSIS_COMPLETE',
       'ROADMAP_GENERATED',
+      'PLACEMENT_ANNOUNCEMENT',
+      'OPPORTUNITY_UPDATE',
       'SYSTEM'
     ],
     required: true

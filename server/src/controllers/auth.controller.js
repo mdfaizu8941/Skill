@@ -52,10 +52,10 @@ export const register = async (req, res, next) => {
     const allowedSelfRoles = ['Student', 'Mentor'];
     const assignedRole = allowedSelfRoles.includes(role) ? role : 'Student';
 
-    // Reject if user tries to register as PlacementOfficer or Admin
+    // Reject if user tries to register as any other role
     if (role && !allowedSelfRoles.includes(role)) {
-      return res.status(403).json({ 
-        message: 'Self-registration is only available for Student and Mentor roles. Contact an administrator for other roles.' 
+      return res.status(403).json({
+        message: 'Self-registration is only available for Student and Mentor roles. Contact an administrator for other roles.'
       });
     }
 
@@ -85,8 +85,8 @@ export const register = async (req, res, next) => {
       ip: req.ip || 'unknown'
     });
 
-    return res.status(201).json({ 
-      token, 
+    return res.status(201).json({
+      token,
       user: {
         id: user._id.toString(),
         name: user.name,

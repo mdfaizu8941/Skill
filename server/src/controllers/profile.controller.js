@@ -11,7 +11,7 @@ export const getMe = asyncHandler(async (req, res) => {
 })
 
 export const updateMe = asyncHandler(async (req, res) => {
-  const { name, bio, university, enrollmentYear, graduationYear, expertiseAreas, linkedinUrl, availability } = req.body
+  const { name, bio, university, enrollmentYear, graduationYear, branch, year, cgpa, expertiseAreas, linkedinUrl, availability } = req.body
 
   const user = await User.findByIdAndUpdate(
     req.user.id,
@@ -26,6 +26,9 @@ export const updateMe = asyncHandler(async (req, res) => {
   if (university !== undefined) profile.university = university
   if (enrollmentYear !== undefined) profile.enrollmentYear = enrollmentYear
   if (graduationYear !== undefined) profile.graduationYear = graduationYear
+  if (branch !== undefined) profile.branch = branch
+  if (year !== undefined) profile.year = year
+  if (cgpa !== undefined) profile.cgpa = cgpa
   await profile.save()
 
   await audit({

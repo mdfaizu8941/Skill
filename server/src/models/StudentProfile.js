@@ -11,6 +11,9 @@ const studentProfileSchema = new mongoose.Schema(
     university: { type: String, default: '' },
     enrollmentYear: { type: Number },
     graduationYear: { type: Number },
+    branch: { type: String, default: '', trim: true },
+    year: { type: Number, min: 1, max: 6 },
+    cgpa: { type: Number, min: 0, max: 10, default: 0 },
     verificationStatus: {
       type: String,
       enum: ['pending', 'verified', 'rejected'],

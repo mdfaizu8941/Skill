@@ -15,7 +15,7 @@ export default function RegisterPage() {
   const navigate = useNavigate()
   const { register: registerUser } = useAuth()
   const [loading, setLoading] = useState(false)
-  
+
   const {
     register,
     handleSubmit,
@@ -77,12 +77,12 @@ export default function RegisterPage() {
             {...register('name', { required: 'Name is required' })}
             error={errors.name?.message}
           />
-          
+
           <Input
             label="Email Address"
             type="email"
             placeholder="john@example.com"
-            {...register('email', { 
+            {...register('email', {
               required: 'Email is required',
               pattern: {
                 value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -91,7 +91,7 @@ export default function RegisterPage() {
             })}
             error={errors.email?.message}
           />
-          
+
           <div className="flex flex-col gap-1.5 w-full">
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
               Role
@@ -102,8 +102,6 @@ export default function RegisterPage() {
             >
               <option value={ROLES.STUDENT}>Student</option>
               <option value={ROLES.MENTOR}>Mentor</option>
-              <option value={ROLES.OFFICER}>Placement Officer</option>
-              <option value={ROLES.ADMIN}>Admin</option>
             </select>
             {errors.role && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{errors.role.message}</p>}
           </div>
@@ -112,7 +110,7 @@ export default function RegisterPage() {
             label="Password"
             type="password"
             placeholder="••••••••"
-            {...register('password', { 
+            {...register('password', {
               required: 'Password is required',
               minLength: {
                 value: 6,
@@ -121,12 +119,12 @@ export default function RegisterPage() {
             })}
             error={errors.password?.message}
           />
-          
+
           <Input
             label="Confirm Password"
             type="password"
             placeholder="••••••••"
-            {...register('confirmPassword', { 
+            {...register('confirmPassword', {
               required: 'Please confirm password',
               validate: value => value === password || 'Passwords do not match'
             })}

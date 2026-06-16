@@ -33,6 +33,13 @@ export const ROUTES = {
     ANALYTICS: '/officer/analytics',
     REPORTS: '/officer/reports',
     STUDENT_SEARCH: '/officer/student-search',
+    STUDENTS: '/officer/students',
+    ELIGIBILITY: '/officer/eligibility',
+    MENTORS: '/officer/mentors',
+    OPPORTUNITIES: '/officer/opportunities',
+    ANNOUNCEMENTS: '/officer/announcements',
+    ACTIVITY_LOGS: '/officer/activity-logs',
+    NOTIFICATIONS: '/officer/notifications',
   },
   ADMIN: {
     DASHBOARD: '/admin/dashboard',
