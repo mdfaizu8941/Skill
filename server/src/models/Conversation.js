@@ -12,6 +12,7 @@ const conversationSchema = new mongoose.Schema(
         count: { type: Number, default: 0 },
       },
     ],
+    hiddenFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );

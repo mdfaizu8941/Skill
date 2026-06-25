@@ -90,6 +90,9 @@ const updateConversationAfterMessage = async (senderId, receiverId, preview, sen
         lastMessageAt: conversation.lastMessageAt,
         unreadCounts: conversation.unreadCounts,
       },
+      $pull: {
+        hiddenFor: { $in: [senderId, receiverId] }
+      }
     }
   );
   return conversation;
@@ -129,6 +132,8 @@ export const listMessages = async (req, res, next) => {
         { sender: req.user.id, receiver: otherUserId },
         { sender: otherUserId, receiver: req.user.id },
       ],
+      isDeletedForEveryone: { $ne: true },
+      deletedFor: { $ne: req.user.id }
     };
 
     const messages = await populateMessage(Message.find(filter).sort({ createdAt: 1 }));
@@ -152,10 +157,15 @@ export const listConversations = async (req, res, next) => {
     const [messages, persistedConversations] = await Promise.all([
       Message.find({
         $or: [{ sender: userId }, { receiver: userId }],
+        isDeletedForEveryone: { $ne: true },
+        deletedFor: { $ne: userId }
       })
         .sort({ createdAt: -1 })
         .lean(),
-      Conversation.find({ participants: userObjectId })
+      Conversation.find({ 
+        participants: userObjectId,
+        hiddenFor: { $ne: userObjectId }
+      })
         .populate('participants', 'name email profilePic avatarUrl bio institution')
         .sort({ lastMessageAt: -1 }),
     ]);
@@ -416,6 +426,84 @@ export const markConversationRead = async (req, res, next) => {
     await resetConversationUnread(req.user.id, otherUserId);
 
     return res.json({ markedRead: result.modifiedCount || 0 });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const deleteConversation = async (req, res, next) => {
+  try {
+    const { otherUserId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(otherUserId)) {
+      return res.status(400).json({ message: 'Invalid conversation user ID' });
+    }
+
+    // Soft delete all messages between these two users for the current user
+    await Message.updateMany(
+      {
+        $or: [
+          { sender: req.user.id, receiver: otherUserId },
+          { sender: otherUserId, receiver: req.user.id },
+        ],
+      },
+      {
+        $addToSet: { deletedFor: req.user.id }
+      }
+    );
+
+    // Hide the conversation document itself
+    await Conversation.updateOne(
+      { participantKey: getParticipantKey(req.user.id, otherUserId) },
+      { $addToSet: { hiddenFor: req.user.id } }
+    );
+    
+    // Reset unread count
+    await resetConversationUnread(req.user.id, otherUserId);
+
+    return res.json({ message: 'Conversation deleted successfully' });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const deleteMessage = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { type } = req.body; // 'for_me' or 'for_everyone'
+
+    if (!['for_me', 'for_everyone'].includes(type)) {
+      return res.status(400).json({ message: 'Invalid deletion type' });
+    }
+
+    const message = await Message.findById(id);
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    const isSender = message.sender.toString() === req.user.id;
+    const isReceiver = message.receiver.toString() === req.user.id;
+
+    if (!isSender && !isReceiver) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    if (type === 'for_everyone') {
+      if (!isSender) {
+        return res.status(403).json({ message: 'You can only delete your own messages for everyone' });
+      }
+      message.isDeletedForEveryone = true;
+      message.text = 'This message was deleted';
+      message.attachmentUrl = '';
+    } else {
+      if (!message.deletedFor.includes(req.user.id)) {
+        message.deletedFor.push(req.user.id);
+      }
+    }
+
+    await message.save();
+
+    return res.json({ message: 'Message deleted successfully', deletedMessage: message });
   } catch (error) {
     return next(error);
   }

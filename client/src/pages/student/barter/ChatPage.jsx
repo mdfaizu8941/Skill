@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { MessageCircle, Send, Search } from 'lucide-react'
+import { MessageCircle, Send, Search, Trash2 } from 'lucide-react'
 import { io } from 'socket.io-client'
 import api, { extractMessage } from '../../../services/api'
 import { useAuth } from '../../../context/AuthContext'
@@ -28,8 +28,17 @@ export default function ChatPage() {
   const [error, setError] = useState('')
   const [navHandled, setNavHandled] = useState(false)
   const [profileModalOpen, setProfileModalOpen] = useState(false)
+  const [openDeleteMenuId, setOpenDeleteMenuId] = useState(null)
   
   const socketRef = useRef(null)
+
+  useEffect(() => {
+    const handleBodyClick = () => setOpenDeleteMenuId(null);
+    if (openDeleteMenuId) {
+      document.addEventListener('click', handleBodyClick);
+    }
+    return () => document.removeEventListener('click', handleBodyClick);
+  }, [openDeleteMenuId]);
 
   const activeConv = useMemo(() => conversations.find((c) => toId(c.peer) === peerId), [conversations, peerId])
 
@@ -76,6 +85,35 @@ export default function ChatPage() {
     } catch (err) { setError(extractMessage(err)) }
   }
 
+  const deleteConversation = async (e, convId, convPeerId) => {
+    e.stopPropagation();
+    if (!window.confirm('Are you sure you want to delete this entire conversation?')) return;
+    try {
+      await api.delete(`/messages/conversations/${convPeerId}`);
+      if (peerId === convPeerId) {
+        setPeerId('');
+        setMessages([]);
+      }
+      await loadConversations();
+    } catch (err) {
+      setError(extractMessage(err));
+    }
+  }
+
+  const deleteMsg = async (msgId, type) => {
+    if (!window.confirm(`Delete this message ${type === 'for_everyone' ? 'for everyone' : 'for me'}?`)) return;
+    try {
+      await api.delete(`/messages/${msgId}`, { data: { type } });
+      setMessages(prev => 
+        prev.filter(m => !(type === 'for_me' && m._id === msgId))
+            .map(m => m._id === msgId && type === 'for_everyone' ? { ...m, text: 'This message was deleted', attachmentUrl: '', isDeletedForEveryone: true } : m)
+      );
+      await loadConversations();
+    } catch (err) {
+      setError(extractMessage(err));
+    }
+  }
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="space-y-4">
       <div className="flex items-center justify-between"><h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chat</h1><Button onClick={() => setSearchOpen((v) => !v)} variant={searchOpen ? 'secondary' : 'primary'}><Search className="w-4 h-4 mr-2" /> New Chat</Button></div>
@@ -104,10 +142,20 @@ export default function ChatPage() {
         <Card className="overflow-y-auto max-h-[600px] p-0" noPadding>
           <div className="p-4 border-b border-slate-100 dark:border-slate-800"><h2 className="font-semibold text-slate-900 dark:text-slate-200">Conversations</h2></div>
           {conversations.map((conv) => { const peer = conv.peer || {}; const id = toId(peer); const active = peerId === id; const unread = conv.unreadCount > 0; return (
-            <button key={id} type="button" onClick={() => openConversation(conv)} className={`w-full text-left px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 transition-colors ${active ? 'bg-brand-50 dark:bg-brand-600/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
-              <div className="flex items-center justify-between"><span className="flex items-center gap-2">{unread && <span className="w-2 h-2 rounded-full bg-brand-500 dark:bg-brand-400" />}<span className="font-medium text-sm text-slate-900 dark:text-slate-200">{peer.name || 'Peer'}</span></span><span className="text-[11px] text-slate-500">{fmtTime(conv.lastMessageAt)}</span></div>
-              <div className="flex items-center justify-between mt-1"><span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{conv.lastMessage || 'No messages yet'}</span>{unread && <Badge variant="brand">{conv.unreadCount}</Badge>}</div>
-            </button>
+            <div key={id} className={`w-full flex items-stretch border-b border-slate-50 dark:border-slate-800/50 transition-colors group ${active ? 'bg-brand-50 dark:bg-brand-600/10' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}>
+              <button type="button" onClick={() => openConversation(conv)} className="flex-1 text-left px-4 py-3 min-w-0">
+                <div className="flex items-center justify-between"><span className="flex items-center gap-2">{unread && <span className="w-2 h-2 rounded-full bg-brand-500 dark:bg-brand-400" />}<span className="font-medium text-sm text-slate-900 dark:text-slate-200 truncate">{peer.name || 'Peer'}</span></span><span className="text-[11px] text-slate-500 flex-shrink-0 ml-2">{fmtTime(conv.lastMessageAt)}</span></div>
+                <div className="flex items-center justify-between mt-1"><span className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[180px]">{conv.lastMessage || 'No messages yet'}</span>{unread && <Badge variant="brand">{conv.unreadCount}</Badge>}</div>
+              </button>
+              <button 
+                type="button" 
+                onClick={(e) => deleteConversation(e, conv._id, id)} 
+                title="Delete conversation"
+                className="px-3 flex items-center justify-center text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all focus:opacity-100"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           ) })}
           {!conversations.length && <p className="text-sm text-slate-500 text-center py-8">No conversations yet.</p>}
         </Card>
@@ -137,11 +185,39 @@ export default function ChatPage() {
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.length > 0 ? messages.map((m) => { const mine = m.sender?._id === currentUserId || m.sender?.id === currentUserId; return (
-              <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[75%] rounded-xl px-4 py-2.5 ${mine ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200'}`}>
-                  <p className="text-sm">{m.text || 'Attachment shared'}</p>
-                  {m.attachmentUrl && <a href={m.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs underline opacity-75 mt-1 block">Open attachment</a>}
+              <div key={m._id} className={`flex ${mine ? 'justify-end' : 'justify-start'} group relative`}>
+                <div className={`max-w-[75%] rounded-xl px-4 py-2.5 relative ${mine ? 'bg-brand-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-200'} ${m.isDeletedForEveryone ? 'opacity-60 italic' : ''}`}>
+                  <p className="text-sm whitespace-pre-wrap">{m.text || 'Attachment shared'}</p>
+                  {m.attachmentUrl && !m.isDeletedForEveryone && <a href={m.attachmentUrl} target="_blank" rel="noreferrer" className="text-xs underline opacity-75 mt-1 block">Open attachment</a>}
                   <div className="flex items-center gap-2 mt-1"><span className="text-[10px] opacity-60">{fmtTime(m.createdAt)}</span>{mine && <span className="text-[10px] opacity-60">{m.isRead || m.readAt ? 'Read' : 'Sent'}</span>}</div>
+                  
+                  {/* Delete Options Button (shown on hover) */}
+                  <div className={`absolute top-1/2 -translate-y-1/2 ${mine ? '-left-10' : '-right-10'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center`}>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setOpenDeleteMenuId(openDeleteMenuId === m._id ? null : m._id); }} 
+                      className="p-1.5 rounded-full bg-slate-200 dark:bg-slate-700 hover:bg-red-100 hover:text-red-600 transition-colors text-slate-500 dark:text-slate-400"
+                      title="Delete message"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    
+                    {/* Delete Menu Popup */}
+                    {openDeleteMenuId === m._id && (
+                      <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className={`absolute z-10 w-40 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 flex flex-col -top-2 ${mine ? 'right-full mr-2' : 'left-full ml-2'}`}
+                      >
+                        <button onClick={() => { setOpenDeleteMenuId(null); deleteMsg(m._id, 'for_me'); }} className="text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                          Delete for me
+                        </button>
+                        {mine && !m.isDeletedForEveryone && (
+                          <button onClick={() => { setOpenDeleteMenuId(null); deleteMsg(m._id, 'for_everyone'); }} className="text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                            Delete for everyone
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) }) : <div className="h-full flex flex-col items-center justify-center text-slate-500 text-sm"><MessageCircle className="w-10 h-10 mb-2 opacity-40" /> Select a conversation to start chatting.</div>}

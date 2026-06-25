@@ -9,6 +9,8 @@ const messageSchema = new mongoose.Schema(
     attachmentUrl: { type: String, default: '' },
     isRead: { type: Boolean, default: false },
     readAt: { type: Date, default: null },
+    deletedFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    isDeletedForEveryone: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
