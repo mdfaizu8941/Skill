@@ -22,10 +22,21 @@ export const generate = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
+  // Duplicate prevention: if active roadmap exists for same gap report, return existing
+  const existingRoadmap = await Roadmap.findOne({
+    studentId: req.user.id,
+    gapReportId: gapReport._id,
+    overallStatus: 'active',
+  });
+
+  if (existingRoadmap) {
+    return res.json({ duplicate: true, roadmap: existingRoadmap });
+  }
+
   const careerRoleTitle = gapReport.careerRoleId?.title || 'Target Role';
 
   // Generate roadmap steps using AI
-  const generatedSteps = await generateRoadmapAI(gapReport.missingSkills, careerRoleTitle);
+  const { steps: generatedSteps, aiMetadata } = await generateRoadmapAI(gapReport.missingSkills, careerRoleTitle);
 
   // Map generated steps to our schema format
   const steps = generatedSteps.map((step, index) => ({
@@ -42,7 +53,8 @@ export const generate = asyncHandler(async (req, res) => {
     careerRoleId: gapReport.careerRoleId?._id || gapReport.careerRoleId || null,
     steps,
     overallStatus: 'active',
-  }); 
+    aiMetadata,
+  });
 
   // Send notification to student
   await createNotification({

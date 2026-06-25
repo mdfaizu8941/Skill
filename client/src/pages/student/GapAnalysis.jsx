@@ -88,9 +88,15 @@ export default function GapAnalysis() {
           : { jobDescription: jobDescription.trim(), mode: 'jd' }
 
       const { data } = await analyseGap(payload)
-      setResult(data.report)
+      // Handle both response shapes: {duplicate, report} or direct report object
+      const reportData = data.report || data
+      setResult(reportData)
       fetchHistory() // Refresh history
-      toast.success('Analysis completed!')
+      if (data.duplicate) {
+        toast('Returning recent analysis for this role (within 5 min)', { icon: 'ℹ️' })
+      } else {
+        toast.success('Analysis completed!')
+      }
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Analysis failed')
     } finally {
@@ -102,9 +108,13 @@ export default function GapAnalysis() {
     if (!reportData?._id) return
     setGeneratingRoadmap(true)
     try {
-      await api.post('/roadmap/generate', { gapReportId: reportData._id })
+      const { data } = await api.post('/roadmap/generate', { gapReportId: reportData._id })
       setRoadmapGenerated(true)
-      toast.success('Roadmap generated successfully')
+      if (data.duplicate) {
+        toast('Active roadmap already exists for this report', { icon: 'ℹ️' })
+      } else {
+        toast.success('Roadmap generated successfully')
+      }
     } catch (err) {
       toast.error(err?.response?.data?.message || 'Failed to generate roadmap')
     } finally {

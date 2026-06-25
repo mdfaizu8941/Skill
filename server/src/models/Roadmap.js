@@ -12,6 +12,17 @@ const stepSubSchema = new mongoose.Schema({
   order: { type: Number, default: 0 },
 });
 
+const aiMetadataSchema = new mongoose.Schema(
+  {
+    model: { type: String, default: '' },
+    timestamp: { type: Date, default: Date.now },
+    promptTokens: { type: Number, default: 0 },
+    completionTokens: { type: Number, default: 0 },
+    totalTokens: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const roadmapSchema = new mongoose.Schema(
   {
     studentId: {
@@ -24,17 +35,18 @@ const roadmapSchema = new mongoose.Schema(
       ref: 'GapReport',
       required: true,
     },
-    careerRoleId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'CareerRole', 
-    default: null 
-},
+    careerRoleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'CareerRole',
+      default: null,
+    },
     steps: [stepSubSchema],
     overallStatus: {
       type: String,
       enum: ['active', 'completed', 'abandoned'],
       default: 'active',
     },
+    aiMetadata: { type: aiMetadataSchema, default: () => ({}) },
   },
   { timestamps: true }
 );

@@ -9,6 +9,17 @@ const missingSkillSubSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const aiMetadataSchema = new mongoose.Schema(
+  {
+    model: { type: String, default: '' },
+    timestamp: { type: Date, default: Date.now },
+    promptTokens: { type: Number, default: 0 },
+    completionTokens: { type: Number, default: 0 },
+    totalTokens: { type: Number, default: 0 },
+  },
+  { _id: false }
+);
+
 const gapReportSchema = new mongoose.Schema({
   studentId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -26,6 +37,7 @@ const gapReportSchema = new mongoose.Schema({
   missingSkills: [missingSkillSubSchema],
   explanation: { type: String, default: '' },
   generatedAt: { type: Date, default: Date.now },
+  aiMetadata: { type: aiMetadataSchema, default: () => ({}) },
 });
 
 gapReportSchema.index({ studentId: 1, generatedAt: -1 });

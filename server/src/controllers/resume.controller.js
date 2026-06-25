@@ -36,7 +36,7 @@ export const parseResume = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'PDF appears empty or scanned. Use a text-based PDF.' })
   }
 
-  const skills = await extractSkillsFromResume(text)
+  const { skills, aiMetadata } = await extractSkillsFromResume(text)
 
   await audit({
     actorId: req.user.id,
@@ -46,7 +46,9 @@ export const parseResume = asyncHandler(async (req, res) => {
     targetModel: 'User',
     metadata: {
       skillsExtracted: skills.length,
-      fileName: req.file?.originalname || 'unknown'
+      fileName: req.file?.originalname || 'unknown',
+      aiModel: aiMetadata.model,
+      totalTokens: aiMetadata.totalTokens,
     },
     ip: req.ip || 'unknown'
   })

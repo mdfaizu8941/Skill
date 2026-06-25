@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useAuth } from '../../context/AuthContext'
-import { extractMessage } from '../../services/api'
+import { showError } from '../../services/api'
 import { ROLES } from '../../constants/roles'
 import { getRoleDashboard } from '../../utils/roleUtils'
 
@@ -46,7 +46,7 @@ export default function RegisterPage() {
       toast.success('Account created successfully!')
       navigate(getRoleDashboard(user.role))
     } catch (err) {
-      toast.error(extractMessage(err))
+      showError(err)
     } finally {
       setLoading(false)
     }

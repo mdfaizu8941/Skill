@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import Card, { CardHeader } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Loader from '../../components/common/Loader'
-import api, { extractMessage } from '../../services/api'
+import api, { showError } from '../../services/api'
 
 export default function ResumeParser() {
   const [file, setFile] = useState(null)
@@ -43,7 +43,7 @@ export default function ResumeParser() {
       setSkills(data.skills || [])
       toast.success('Resume parsed successfully!')
     } catch (err) {
-      toast.error(extractMessage(err))
+      showError(err)
     } finally {
       setParsing(false)
     }
@@ -57,7 +57,7 @@ export default function ResumeParser() {
       setConfirmed(true)
       toast.success('Skills saved to your profile!')
     } catch (err) {
-      toast.error(extractMessage(err))
+      showError(err)
     }
   }
 
@@ -73,7 +73,7 @@ export default function ResumeParser() {
           onClick={() => !parsing && inputRef.current?.click()}
           className={`cursor-pointer border-2 border-dashed rounded-xl p-12 text-center transition-colors ${dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 bg-slate-50 dark:bg-slate-800/30'} ${parsing ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-          <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => handleFile(e.target.files[0])} disabled={parsing} />
+          <input ref={inputRef} type="file" accept=".pdf" className="hidden" onChange={(e) => { handleFile(e.target.files[0]); e.target.value = '' }} disabled={parsing} />
           <Upload className="w-10 h-10 text-slate-400 dark:text-slate-500 mx-auto mb-3" />
           <p className="text-slate-700 dark:text-slate-300 font-medium">{file ? file.name : 'Drag & drop your PDF here, or click to browse'}</p>
           <p className="text-xs text-slate-500 mt-1">PDF files only, max 10MB</p>

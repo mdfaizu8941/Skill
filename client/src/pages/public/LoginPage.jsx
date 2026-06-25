@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useAuth } from '../../context/AuthContext'
-import { extractMessage } from '../../services/api'
+import { showError } from '../../services/api'
 import { getRoleDashboard } from '../../utils/roleUtils'
 
 export default function LoginPage() {
@@ -33,7 +33,7 @@ export default function LoginPage() {
       toast.success('Welcome back!')
       navigate(getRoleDashboard(user.role))
     } catch (err) {
-      toast.error(extractMessage(err))
+      showError(err)
     } finally {
       setLoading(false)
     }

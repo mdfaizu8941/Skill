@@ -31,7 +31,8 @@ export const analyse = asyncHandler(async (req, res) => {
       return res.status(400).json({ message: 'Job description too short. Minimum 50 characters.' })
     }
     roleTitle = targetRole || 'Custom Role (JD)'
-    requiredSkills = await extractSkillsFromJD(jobDescription)
+    const { skills: jdSkills1 } = await extractSkillsFromJD(jobDescription)
+    requiredSkills = jdSkills1
     if (requiredSkills.length === 0) {
       return res.status(400).json({ message: 'Could not extract skills from job description.' })
     }
@@ -50,13 +51,26 @@ export const analyse = asyncHandler(async (req, res) => {
       }))
     } else {
       roleTitle = targetRole
-      requiredSkills = await extractSkillsFromJD(
+      const { skills: jdSkills2 } = await extractSkillsFromJD(
         `List the required technical and soft skills for a ${targetRole} position`
       )
+      requiredSkills = jdSkills2
       if (requiredSkills.length === 0) {
         return res.status(400).json({ message: 'Could not generate skill requirements for this role.' })
       }
     }
+  }
+
+  // Duplicate prevention: same role within 5 minutes returns existing report
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+  const recentDuplicate = await GapReport.findOne({
+    studentId: req.user.id,
+    targetRole: roleTitle,
+    generatedAt: { $gte: fiveMinutesAgo },
+  }).sort({ generatedAt: -1 })
+
+  if (recentDuplicate) {
+    return res.json({ duplicate: true, report: recentDuplicate })
   }
 
   const { compatibilityScore, matchedSkills, missingSkills } = runGapEngine(
@@ -64,7 +78,7 @@ export const analyse = asyncHandler(async (req, res) => {
     requiredSkills
   )
 
-  const explanation = await generateGapExplanation(matchedSkills, missingSkills, roleTitle)
+  const { explanation, aiMetadata } = await generateGapExplanation(matchedSkills, missingSkills, roleTitle)
 
   const report = await GapReport.create({
     studentId: req.user.id,
@@ -75,6 +89,7 @@ export const analyse = asyncHandler(async (req, res) => {
     missingSkills,
     explanation,
     generatedAt: new Date(),
+    aiMetadata,
   })
 
   // Send notification to student

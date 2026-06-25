@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-export const requireAuth = (req, res, next) => {
+export const requireAuth = async (req, res, next) => {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
 
@@ -17,6 +18,15 @@ export const requireAuth = (req, res, next) => {
     if (!userId) {
       console.error('Token missing userId field:', payload);
       return res.status(401).json({ message: 'Invalid token format' });
+    }
+    
+    // Session revocation: check isActive on every protected request
+    const dbUser = await User.findById(userId).select('isActive').lean();
+    if (!dbUser) {
+      return res.status(401).json({ message: 'User no longer exists' });
+    }
+    if (!dbUser.isActive) {
+      return res.status(403).json({ message: 'Account is deactivated. Contact an administrator.' });
     }
     
     // Extract role with warning if missing

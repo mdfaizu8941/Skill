@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { redactPII, sanitizeForLLM } from '../utils/sanitizer.js';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
 
@@ -13,15 +14,33 @@ const timeout = (ms) =>
 const TIMEOUT_MS = 15_000;
 
 /**
+ * Build a consistent aiMetadata object from a Groq response.
+ * @param {object} response - Groq API response object
+ * @param {string} modelName - model identifier used in the request
+ */
+const buildAiMetadata = (response, modelName) => ({
+  model: response?.model || modelName || '',
+  timestamp: new Date(),
+  promptTokens: response?.usage?.prompt_tokens || 0,
+  completionTokens: response?.usage?.completion_tokens || 0,
+  totalTokens: response?.usage?.total_tokens || 0,
+});
+
+/**
  * Extract skills from resume text using Groq LLM.
+ * Applies PII redaction and prompt injection sanitization before the API call.
  * @param {string} resumeText - Raw text extracted from a PDF resume
- * @returns {Promise<string[]>} Array of skill name strings
+ * @returns {Promise<{ skills: string[], aiMetadata: object }>}
  */
 export const extractSkillsFromResume = async (resumeText) => {
+  const modelName = process.env.GROQ_MODEL_LARGE || 'llama-3.3-70b-versatile';
+  // Security: redact PII then strip injection patterns
+  const safeText = sanitizeForLLM(redactPII(resumeText));
+
   try {
     const response = await Promise.race([
       groq.chat.completions.create({
-        model: process.env.GROQ_MODEL_LARGE || 'llama-3.3-70b-versatile',
+        model: modelName,
         messages: [
           {
             role: 'system',
@@ -29,7 +48,7 @@ export const extractSkillsFromResume = async (resumeText) => {
           },
           {
             role: 'user',
-            content: resumeText,
+            content: safeText,
           },
         ],
         temperature: 0.1,
@@ -39,19 +58,20 @@ export const extractSkillsFromResume = async (resumeText) => {
     ]);
 
     const text = response.choices[0]?.message?.content?.trim() || '[]';
-
-    // Strip markdown code fences if present
     const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
+    let skills = [];
     try {
       const parsed = JSON.parse(cleaned);
-      return Array.isArray(parsed) ? parsed : [];
+      skills = Array.isArray(parsed) ? parsed : [];
     } catch {
-      return [];
+      skills = [];
     }
+
+    return { skills, aiMetadata: buildAiMetadata(response, modelName) };
   } catch (error) {
     console.error('extractSkillsFromResume error:', error.message);
-    return [];
+    return { skills: [], aiMetadata: buildAiMetadata(null, modelName) };
   }
 };
 
@@ -60,16 +80,21 @@ export const extractSkillsFromResume = async (resumeText) => {
  * @param {string[]} matchedSkills
  * @param {Array<{skillName: string}>} missingSkills
  * @param {string} careerRoleTitle
- * @returns {Promise<string>}
+ * @returns {Promise<{ explanation: string, aiMetadata: object }>}
  */
 export const generateGapExplanation = async (matchedSkills, missingSkills, careerRoleTitle) => {
+  const modelName = process.env.GROQ_MODEL_FAST || 'llama-3.1-8b-instant';
+
   try {
     const missingNames = missingSkills.map((s) => s.skillName).join(', ');
     const matchedNames = matchedSkills.join(', ');
 
+    // Sanitize role title against injection
+    const safeRoleTitle = sanitizeForLLM(careerRoleTitle);
+
     const response = await Promise.race([
       groq.chat.completions.create({
-        model: process.env.GROQ_MODEL_FAST || 'llama-3.1-8b-instant',
+        model: modelName,
         messages: [
           {
             role: 'system',
@@ -77,7 +102,7 @@ export const generateGapExplanation = async (matchedSkills, missingSkills, caree
           },
           {
             role: 'user',
-            content: `A student wants to become a "${careerRoleTitle}". They already have these skills: ${matchedNames || 'none'}. They are missing these skills: ${missingNames || 'none'}. Explain in 3-4 sentences what the student is good at and what they need to learn. Be specific and constructive.`,
+            content: `A student wants to become a "${safeRoleTitle}". They already have these skills: ${matchedNames || 'none'}. They are missing these skills: ${missingNames || 'none'}. Explain in 3-4 sentences what the student is good at and what they need to learn. Be specific and constructive.`,
           },
         ],
         temperature: 0.5,
@@ -86,10 +111,11 @@ export const generateGapExplanation = async (matchedSkills, missingSkills, caree
       timeout(TIMEOUT_MS),
     ]);
 
-    return response.choices[0]?.message?.content?.trim() || 'Unable to generate explanation.';
+    const explanation = response.choices[0]?.message?.content?.trim() || 'Unable to generate explanation.';
+    return { explanation, aiMetadata: buildAiMetadata(response, modelName) };
   } catch (error) {
     console.error('generateGapExplanation error:', error.message);
-    return 'Unable to generate explanation at this time.';
+    return { explanation: 'Unable to generate explanation at this time.', aiMetadata: buildAiMetadata(null, modelName) };
   }
 };
 
@@ -97,9 +123,10 @@ export const generateGapExplanation = async (matchedSkills, missingSkills, caree
  * Generate a learning roadmap for missing skills.
  * @param {Array<{skillName: string, level: string, weight: number}>} missingSkills
  * @param {string} careerRoleTitle
- * @returns {Promise<Array<{title: string, description: string, resourceUrl: string|null, order: number}>>}
+ * @returns {Promise<{ steps: Array, aiMetadata: object }>}
  */
 export const generateRoadmap = async (missingSkills, careerRoleTitle) => {
+  const modelName = process.env.GROQ_MODEL_LARGE || 'llama-3.3-70b-versatile';
   const defaultStep = [
     {
       title: `Learn fundamentals for ${careerRoleTitle}`,
@@ -114,9 +141,11 @@ export const generateRoadmap = async (missingSkills, careerRoleTitle) => {
       .map((s) => `${s.skillName} (level: ${s.level}, priority weight: ${s.weight})`)
       .join('\n');
 
+    const safeRoleTitle = sanitizeForLLM(careerRoleTitle);
+
     const response = await Promise.race([
       groq.chat.completions.create({
-        model: process.env.GROQ_MODEL_LARGE || 'llama-3.3-70b-versatile',
+        model: modelName,
         messages: [
           {
             role: 'system',
@@ -125,7 +154,7 @@ export const generateRoadmap = async (missingSkills, careerRoleTitle) => {
           },
           {
             role: 'user',
-            content: `Generate a step-by-step learning roadmap for a student who wants to become a "${careerRoleTitle}". They need to learn the following skills:\n${skillList}\n\nCreate actionable learning steps ordered by priority.`,
+            content: `Generate a step-by-step learning roadmap for a student who wants to become a "${safeRoleTitle}". They need to learn the following skills:\n${skillList}\n\nCreate actionable learning steps ordered by priority.`,
           },
         ],
         temperature: 0.3,
@@ -137,46 +166,55 @@ export const generateRoadmap = async (missingSkills, careerRoleTitle) => {
     const text = response.choices[0]?.message?.content?.trim() || '[]';
     const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
 
+    let steps = defaultStep;
     try {
       const parsed = JSON.parse(cleaned);
-      return Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultStep;
+      steps = Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultStep;
     } catch {
-      return defaultStep;
+      steps = defaultStep;
     }
+
+    return { steps, aiMetadata: buildAiMetadata(response, modelName) };
   } catch (error) {
     console.error('generateRoadmap error:', error.message);
-    return defaultStep;
+    return { steps: defaultStep, aiMetadata: buildAiMetadata(null, modelName) };
   }
 };
 
 /**
  * Extract structured skills from a job description using Groq LLM.
+ * Applies prompt injection sanitization before the API call.
  * @param {string} jdText - Job description or role prompt text
- * @returns {Promise<Array<{skillName: string, level: string, weight: number}>>}
+ * @returns {Promise<{ skills: Array<{skillName: string, level: string, weight: number}>, aiMetadata: object }>}
  */
 export const extractSkillsFromJD = async (jdText) => {
+  const modelName = process.env.GROQ_MODEL_LARGE || 'llama-3.3-70b-versatile';
+  // Security: sanitize JD text before sending to LLM
+  const safeJdText = sanitizeForLLM(jdText);
+
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Groq timeout')), 15000)
-  )
+  );
 
   const request = groq.chat.completions.create({
-    model: process.env.GROQ_MODEL_LARGE,
+    model: modelName,
     messages: [
       {
         role: 'system',
         content: 'You are a skill extractor. Extract required skills from the job description or role prompt. Return ONLY a JSON array of objects with shape { skillName: string, level: "beginner"|"intermediate"|"advanced", weight: number between 1 and 10 }. Focus on technical and domain-specific skills only. Exclude generic soft skills such as communication, teamwork, leadership, time management, adaptability, problem solving, collaboration, and mentorship. No preamble, no markdown.',
       },
-      { role: 'user', content: jdText },
+      { role: 'user', content: safeJdText },
     ],
     max_tokens: 1000,
-  })
+  });
 
   try {
-    const response = await Promise.race([request, timeoutPromise])
-    const text = response.choices[0]?.message?.content || '[]'
-    const clean = text.replace(/```json|```/g, '').trim()
-    return JSON.parse(clean)
+    const response = await Promise.race([request, timeoutPromise]);
+    const text = response.choices[0]?.message?.content || '[]';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const skills = JSON.parse(clean);
+    return { skills, aiMetadata: buildAiMetadata(response, modelName) };
   } catch {
-    return []
+    return { skills: [], aiMetadata: buildAiMetadata(null, modelName) };
   }
-}
+};

@@ -3,11 +3,12 @@ import { login, me, register, updateMe, adminCreateUser } from '../controllers/a
 import { requireAuth } from '../middleware/auth.js';
 import { permit } from '../middleware/rbac.js';
 import { auditLogger } from '../middleware/auditLogger.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
-router.post('/register', register);
-router.post('/login', login);
+router.post('/register', authLimiter, register);
+router.post('/login', authLimiter, login);
 router.get('/me', requireAuth, me);
 router.put('/me', requireAuth, updateMe);
 
