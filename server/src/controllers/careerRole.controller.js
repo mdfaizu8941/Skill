@@ -4,8 +4,8 @@ import { audit } from '../services/auditService.js';
 
 export const getAll = asyncHandler(async (req, res) => {
   const roles = await CareerRole.find({ isActive: true })
-    .select('title description industry requiredSkills createdAt')
-    .sort({ createdAt: -1 });
+    .select('title description industry requiredSkills')
+    .sort({ title: 1 });
 
   return res.json({ roles });
 });

@@ -1,4 +1,12 @@
 import AuditEvent from '../models/AuditEvent.js'
+import { redactPII } from '../utils/sanitizer.js'
+
+const redactMetadata = (metadata) => {
+  if (!metadata || typeof metadata !== 'object') return metadata
+  const str = JSON.stringify(metadata)
+  const redacted = redactPII(str)
+  try { return JSON.parse(redacted) } catch { return metadata }
+}
 
 /**
  * Creates an audit event. Never throws — failures are logged to console only.
@@ -19,7 +27,7 @@ export const audit = async ({
       action,
       targetId: targetId?.toString() || null,
       targetModel,
-      metadata,
+      metadata: redactMetadata(metadata),
       ip
     })
   } catch (err) {

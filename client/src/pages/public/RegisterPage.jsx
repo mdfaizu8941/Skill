@@ -112,9 +112,10 @@ export default function RegisterPage() {
             placeholder="••••••••"
             {...register('password', {
               required: 'Password is required',
-              minLength: {
-                value: 6,
-                message: 'Password must be at least 6 characters'
+              minLength: { value: 8, message: 'Password must be at least 8 characters' },
+              validate: {
+                hasNumber: v => /\d/.test(v) || 'Password must contain at least one number',
+                hasLetter: v => /[a-zA-Z]/.test(v) || 'Password must contain at least one letter'
               }
             })}
             error={errors.password?.message}

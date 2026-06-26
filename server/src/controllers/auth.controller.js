@@ -25,13 +25,9 @@ const createToken = (user) =>
   );
 
 const publicUser = (user) => ({
-  _id: user._id.toString(),
   id: user._id.toString(),
   name: user.name,
   email: user.email,
-  profilePic: user.profilePic,
-  bio: user.bio,
-  institution: user.institution,
   role: user.role || 'Student',
 });
 
@@ -42,6 +38,16 @@ export const register = async (req, res, next) => {
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+
+    if (!password || password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' })
+    }
+    if (!/\d/.test(password)) {
+      return res.status(400).json({ message: 'Password must contain at least one number.' })
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+      return res.status(400).json({ message: 'Password must contain at least one letter.' })
     }
 
     if (!isValidEmail(normalizedEmail)) {

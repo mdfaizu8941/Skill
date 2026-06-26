@@ -21,16 +21,17 @@ export const requireAuth = async (req, res, next) => {
     }
     
     // Session revocation: check isActive on every protected request
-    const dbUser = await User.findById(userId).select('isActive').lean();
+    // TODO: replace with Redis session cache at scale
+    const dbUser = await User.findById(userId).select('isActive role').lean();
     if (!dbUser) {
-      return res.status(401).json({ message: 'User no longer exists' });
+      return res.status(401).json({ message: 'Account not found. Please register again.' });
     }
     if (!dbUser.isActive) {
-      return res.status(403).json({ message: 'Account is deactivated. Contact an administrator.' });
+      return res.status(403).json({ message: 'Your account has been suspended. Contact your placement officer for assistance.' });
     }
     
     // Extract role with warning if missing
-    const role = payload.role;
+    const role = dbUser.role || payload.role;
     if (!role) {
       console.warn('Token missing role field for user:', userId);
     }

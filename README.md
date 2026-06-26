@@ -1,290 +1,174 @@
-# Skill Bartering System
+# 🚀 Skill Gap Intelligence Platform (SGIP)
 
-A full-stack MERN platform for peer-to-peer skill exchange and career development, built for students to barter skills, track evidence, get AI-powered gap analysis, and connect with mentors.
+> AI-driven personalized career development and skill bartering marketplace.
 
----
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Deployed-success?style=for-the-badge&logo=vercel)](https://sgip-pi.vercel.app)
+[![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render)](https://sgip.onrender.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 
-## Tech Stack
+## About SGIP
+The Skill Gap Intelligence Platform (SGIP) is a comprehensive web application designed to bridge the gap between student capabilities and industry requirements. By leveraging AI-powered resume parsing and deterministic skill gap analysis, SGIP generates actionable, personalized learning roadmaps while fostering a collaborative skill-bartering marketplace.
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19, Vite, Tailwind CSS, Framer Motion |
-| Backend | Node.js, Express.js |
-| Database | MongoDB, Mongoose |
-| Auth | JWT, bcryptjs, RBAC middleware |
-| Real-time | Socket.IO |
-| AI | Groq SDK (LLM-powered gap analysis & roadmaps) |
-| File Storage | Cloudinary, Multer |
-| Charts | Recharts |
+## Live Stats
 
----
+| Metric | Count |
+|--------|-------|
+|  Gap Reports Generated | 30 |
+|  Roadmaps Created | 13 |
+|  Skills in Database | 121 |
+|  Career Roles | 5 |
+| ⭐ Average Compatibility Score | 48.4% |
 
-## Features
+*Stats fetched live from MongoDB at README generation time — June 26, 2026*
 
-### Student
-- Dashboard with quick-action cards and skill stats
-- Skill marketplace — browse, post, and manage skill listings
-- Barter system — send/receive skill exchange requests
-- Real-time messaging with read state tracking
-- Upload skill evidence (files/links) for mentor review
-- AI-powered gap analysis against target career roles
-- AI-generated learning roadmaps
-- Resume parser — extract skills from uploaded PDF resumes
-- Profile management with skill portfolio
-- Ratings and feedback after completed exchanges
-- Notifications for exchanges, messages, and evidence reviews
+## ✨ Features
 
-### Mentor
-- Dashboard with assigned student overview
-- Review and approve/reject student skill evidence
-- Notifications for new evidence submissions
+-  **AI Resume Parsing**: Extracts skills directly from user resumes using LLaMA 3.3.
+-  **Gap Analysis (Role + JD mode)**: Calculates skill compatibility against predefined career roles or custom Job Descriptions.
+-  **Fuzzy Skill Matching**: Deterministically matches overlapping user skills with industry requirements using Jaccard similarity.
+-  **Personalized Roadmap**: Generates detailed, step-by-step learning roadmaps to acquire missing skills.
+- **Mentor Discovery**: Connects students with experienced mentors for personalized guidance.
+- **Evidence Review**: Allows students to submit proof of skill acquisition for mentor review and verification.
+-  **4-Role RBAC**: Secure access controls divided between Student, Mentor, Placement Officer, and Admin.
+-  **Audit Trail**: Immutable logging of all state-changing actions across the platform.
+-  **Rate Limiting**: Defends endpoints against abuse with intelligent rate limiting.
+-  **PII Redaction**: Scrubs Personally Identifiable Information before interacting with LLMs.
 
-### Admin
-- User management — view, role assignment, account control
-- Career role catalog management
-- Audit log viewer for system activity
+## 🛠️ Tech Stack
 
----
+### Frontend
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-11-0055FF?style=for-the-badge&logo=framer&logoColor=white)
+![React Hook Form](https://img.shields.io/badge/React_Hook_Form-7-EC5990?style=for-the-badge&logo=reacthookform&logoColor=white)
+![React Router](https://img.shields.io/badge/React_Router-6-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white)
 
-## Project Structure
+### Backend
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4-000000?style=for-the-badge&logo=express&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+![Helmet](https://img.shields.io/badge/Helmet-Security-333333?style=for-the-badge)
+![Morgan](https://img.shields.io/badge/Morgan-Logger-blue?style=for-the-badge)
 
-```
-/
-├── client/                  # React frontend (Vite)
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── common/      # Shared UI primitives
-│   │   │   ├── layout/      # Navbar, Footer, Sidebar
-│   │   │   └── ui/          # Reusable UI components (Card, Button, etc.)
-│   │   ├── context/         # AuthContext, NotificationContext
-│   │   ├── hooks/           # useAuth, useRole, useAsync, useNotifications
-│   │   ├── pages/
-│   │   │   ├── admin/       # AdminDashboard, UserManagement, AuditLogs, RoleCatalog
-│   │   │   ├── mentor/      # MentorDashboard, EvidenceReview, AssignedStudents
-│   │   │   ├── officer/     # (Placement officer views)
-│   │   │   ├── public/      # Login, Register, Landing
-│   │   │   └── student/     # Dashboard, GapAnalysis, Roadmap, SkillsEvidence,
-│   │   │                    # ResumeParser, MyProfile, CareerRoles, Barter
-│   │   ├── routes/          # AppRoutes, AdminRoutes, MentorRoutes, StudentRoutes
-│   │   ├── services/        # API service modules per feature
-│   │   ├── styles/          # Global CSS / Tailwind config
-│   │   └── utils/           # Helper utilities
-│   └── vite.config.js
-│
-├── server/                  # Express API
-│   └── src/
-│       ├── config/          # cloudinary.js, multerCloudinary.js
-│       ├── controllers/     # Route handlers per feature
-│       ├── middleware/       # auth.js (JWT), rbac.js (roles), auditLogger.js
-│       ├── models/          # Mongoose schemas (see below)
-│       ├── routes/          # Express routers per feature
-│       ├── services/        # Business logic layer
-│       ├── utils/           # Shared utilities
-│       ├── seed.js          # Database seeder
-│       └── app.js           # Express app setup
-│
-├── package.json             # Root workspace config (npm workspaces)
-├── requirements.md          # Human-readable dependency reference
-└── .gitignore
+### Database
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Mongoose](https://img.shields.io/badge/Mongoose-ODM-880000?style=for-the-badge)
+![Cloudinary](https://img.shields.io/badge/Cloudinary-Media-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)
+
+### AI
+![Groq](https://img.shields.io/badge/Groq-LLaMA_3.3-F55036?style=for-the-badge&logo=meta&logoColor=white)
+![LLaMA 3.1](https://img.shields.io/badge/Meta-LLaMA_3.1-0467DF?style=for-the-badge&logo=meta&logoColor=white)
+
+### Cloud
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Render](https://img.shields.io/badge/Render-Backend-46E3B7?style=for-the-badge&logo=render&logoColor=black)
+
+### DevOps
+![Git](https://img.shields.io/badge/Git-VCS-F05032?style=for-the-badge&logo=git&logoColor=white)
+![npm](https://img.shields.io/badge/npm-Package-CB3837?style=for-the-badge&logo=npm&logoColor=white)
+
+## 🏗️ Architecture
+
+```text
+[Browser] 
+   │
+   └──► [Vercel (React Frontend)] 
+              │
+              └──► [Render (Express Backend)] 
+                         ├──► [MongoDB Atlas (Database)]
+                         ├──► [Cloudinary (Asset Storage)]
+                         └──► [Groq API (LLM Inference)]
 ```
 
-### Database Models
+## 👥 User Roles
 
-| Model | Purpose |
-|---|---|
-| `User` | Auth, roles (student / mentor / admin / officer) |
-| `StudentProfile` | Extended student info, skills portfolio |
-| `Skill` | Skill listings for marketplace |
-| `Exchange` | Barter requests and status |
-| `Message` | Real-time messages per conversation |
-| `Conversation` | Message thread between two users |
-| `Rating` | Post-exchange feedback |
-| `SkillEvidence` | Evidence uploads awaiting mentor review |
-| `GapReport` | AI-generated gap analysis results |
-| `Roadmap` | AI-generated learning roadmaps |
-| `CareerRole` | Career role definitions with required skills |
-| `AuditEvent` | Admin audit log entries |
+| Role | Access | Key Features |
+|------|--------|--------------|
+| **Student** | Marketplace, barter, evidence, gap analysis, roadmap, resume, profile | Explore skills, generate roadmaps, trade skills, and build portfolios. |
+| **Mentor** | Evidence review, assigned students | Review student evidence, provide actionable feedback, guide career growth. |
+| **Placement Officer** | Analytics and reporting | Monitor overall cohort progress and skill distributions. |
+| **Admin** | User management, role catalog, audit logs, full access | System configuration, moderation, log monitoring, role management. |
 
----
+## 🧠 AI Pipeline
 
-## Getting Started
+```text
+Resume PDF ──► pdf2json ──► PII Redaction ──► Groq LLM (LLaMA 3.3) ──► Skill Array
+                                                                         │
+                                                                         ▼
+                                                                  Fuzzy Gap Engine
+                                                                         │
+    Roadmap ◄── AI Explanation (LLaMA 3.1) ◄── Compatibility Score ◄─────┘
+```
+
+## 🔐 Security Features
+
+- JWT authentication with 7-day expiry
+- bcrypt password hashing (cost factor 10)
+- Role-based access control (Student, Mentor, PlacementOfficer, Admin)
+- Helmet.js security headers
+- CORS restricted to allowed origins
+- Rate limiting on auth routes (10 req / 15 min)
+- Rate limiting on resume parser (4 req / hour)
+- Rate limiting on gap analysis (10 req / hour)
+- Rate limiting on evidence submission (10 req / hour)
+- Immutable audit trail for all state-changing actions
+- PII redaction before sending data to Groq API
+- Prompt injection sanitization on user-supplied text
+- File upload validation (MIME type + size limits)
+- Cloudinary secure storage for user uploads
+- isActive check on every authenticated request
+- Password minimum: 8 characters, at least one letter and one number
+- Ownership enforcement on all user-scoped resources
+
+## 🚀 Getting Started
 
 ### Prerequisites
-
-- **Node.js** >= 18.x
-- **npm** >= 9.x
-- **MongoDB** (local or Atlas)
-- **Cloudinary** account
-- **Groq** API key
+- Node.js (v18+)
+- MongoDB Atlas account (or local MongoDB)
+- Groq API Key
+- Cloudinary Account
 
 ### Installation
 
-```bash
-# 1. Clone the repository
-git clone <repo-url>
-cd Skill
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/mohdarsh786/sgip.git
+   cd sgip
+   ```
 
-# 2. Install all dependencies for all workspaces
-npm install
+2. **Install dependencies:**
+   ```bash
+   npm install          # Install root dependencies (concurrently)
+   cd client && npm install
+   cd ../server && npm install
+   ```
 
-# 3. Set up environment variables
-cp server/.env.example server/.env
-cp client/.env.example client/.env
-# Fill in the values in both .env files
+3. **Environment Setup:**
+   - Copy `server/.env.example` to `server/.env` and fill in:
+     `MONGODB_URI`, `JWT_SECRET`, `GROQ_API_KEY`, `CLOUDINARY_URL`, etc.
+   - Copy `client/.env.example` to `client/.env` and update the `VITE_API_URL`.
 
-# 4. (Optional) Seed the database
-node server/src/seed.js
+4. **Seed Database (Optional):**
+   ```bash
+   cd server
+   npm run seed
+   ```
 
-# 5. Start both client and server
-npm run dev
-```
+5. **Run Development Servers:**
+   ```bash
+   # From the project root
+   npm run dev
+   ```
 
-- **Client** runs at: `http://localhost:5173`
-- **API** runs at: `http://localhost:5000`
+## 👨‍💻 Team
 
----
+- **Mohd. Arsh** — [![GitHub Badge](https://img.shields.io/badge/GitHub-mohdarsh786-181717?style=flat&logo=github)](https://github.com/mohdarsh786)
+- **Mohd. Faiz** — [![GitHub Badge](https://img.shields.io/badge/GitHub-mdfaizu8941-181717?style=flat&logo=github)](https://github.com/mdfaizu8941)
 
-## Environment Variables
+## 📄 License
 
-### `server/.env`
-
-| Variable | Description |
-|---|---|
-| `PORT` | Server port (default: 5000) |
-| `MONGODB_URI` | MongoDB connection string |
-| `JWT_SECRET` | Secret key for JWT signing |
-| `JWT_EXPIRES_IN` | JWT expiry (e.g. `7d`) |
-| `CLIENT_ORIGIN` | Frontend URL for CORS (e.g. `http://localhost:5173`) |
-| `NODE_ENV` | `development` or `production` |
-| `GROQ_API_KEY` | Groq API key for AI features |
-| `GROQ_MODEL_LARGE` | Groq model ID for heavy tasks |
-| `GROQ_MODEL_FAST` | Groq model ID for fast tasks |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name |
-| `CLOUDINARY_API_KEY` | Cloudinary API key |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
-
-### `client/.env`
-
-| Variable | Description |
-|---|---|
-| `VITE_API_URL` | API base URL (e.g. `http://localhost:5000/api`) |
-| `VITE_SOCKET_URL` | Socket.IO server URL (e.g. `http://localhost:5000`) |
-
----
-
-## API Endpoints
-
-### Auth — `/api/auth`
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/register` | Register a new user |
-| `POST` | `/login` | Login and receive JWT |
-| `GET` | `/me` | Get current authenticated user |
-
-### Skills — `/api/skills`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Get all skill listings (marketplace) |
-| `GET` | `/mine` | Get current user's skill listings |
-| `POST` | `/` | Create a new skill listing |
-| `PUT` | `/:id` | Update a skill listing |
-| `DELETE` | `/:id` | Delete a skill listing |
-
-### Exchanges — `/api/exchanges`
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/` | Create an exchange request |
-| `GET` | `/` | Get exchanges for current user |
-| `PATCH` | `/:id` | Update exchange status (accept/reject/complete) |
-
-### Messages — `/api/messages`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Get all conversations |
-| `GET` | `/:conversationId` | Get messages in a conversation |
-| `POST` | `/` | Send a message |
-| `PATCH` | `/:id/read` | Mark message as read |
-
-### Ratings — `/api/ratings`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Get ratings |
-| `POST` | `/` | Submit a rating |
-
-### Analytics — `/api/analytics`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/summary` | Get analytics summary |
-
-### Profile — `/api/profile`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Get student profile |
-| `PUT` | `/` | Update student profile |
-
-### Evidence — `/api/evidence`
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/` | Upload skill evidence |
-| `GET` | `/` | Get evidence for current user |
-| `GET` | `/pending` | Get all pending evidence (mentor) |
-| `PATCH` | `/:id/review` | Approve/reject evidence (mentor) |
-
-### Gap Analysis — `/api/gap`
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/` | Run AI gap analysis against a career role |
-| `GET` | `/` | Get gap reports for current user |
-
-### Roadmap — `/api/roadmap`
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/` | Generate AI learning roadmap |
-| `GET` | `/` | Get roadmaps for current user |
-
-### Resume — `/api/resume`
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/parse` | Upload and parse a resume PDF |
-
-### Career Roles — `/api/career-roles`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Get all career roles |
-| `POST` | `/` | Create a career role (admin) |
-| `PUT` | `/:id` | Update a career role (admin) |
-| `DELETE` | `/:id` | Delete a career role (admin) |
-
-### Mentor — `/api/mentor`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/students` | Get assigned students |
-
-### Admin — `/api/admin`
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/users` | Get all users |
-| `PATCH` | `/users/:id/role` | Update user role |
-| `DELETE` | `/users/:id` | Delete a user |
-| `GET` | `/audit-logs` | Get system audit logs |
-
----
-
-## User Roles
-
-| Role | Access |
-|---|---|
-| `student` | Marketplace, barter, evidence, gap analysis, roadmap, resume, profile |
-| `mentor` | Evidence review, assigned students |
-| `officer` | (Placement officer views) |
-| `admin` | User management, role catalog, audit logs, full access |
-
----
-
-## Scripts
-
-```bash
-npm run dev        # Run client + server concurrently (from root)
-npm run build      # Build client for production
-npm run start      # Start server in production mode
-```
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
