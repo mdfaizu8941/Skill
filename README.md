@@ -1,18 +1,58 @@
-# 🚀 Skill Gap Intelligence Platform (SGIP)
+# Skill Gap Intelligence Platform (SGIP)
 
-> AI-driven personalized career development and skill bartering marketplace.
+<p align="center">
+  <h3 align="center">AI-powered career development platform with intelligent skill gap analysis, personalized roadmaps, and a collaborative skill marketplace.</h3>
+</p>
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Deployed-success?style=for-the-badge&logo=vercel)](https://sgip-pi.vercel.app)
-[![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render)](https://sgip.onrender.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-![Node.js](https://img.shields.io/badge/Node.js-22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+<p align="center">
+  <a href="https://sgip-pi.vercel.app">
+    <img src="https://img.shields.io/badge/%20TRY%20LIVE%20DEMO-Launch%20SGIP-ff4757?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo"/>
+  </a>
+  &nbsp;
+  <a href="https://sgip.onrender.com">
+    <img src="https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render" alt="Backend"/>
+  </a>
+  &nbsp;
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License"/>
+  </a>
+</p>
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-22-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js"/>
+  <img src="https://img.shields.io/badge/MongoDB-Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React"/>
+</p>
 
 ## About SGIP
 The Skill Gap Intelligence Platform (SGIP) is a comprehensive web application designed to bridge the gap between student capabilities and industry requirements. By leveraging AI-powered resume parsing and deterministic skill gap analysis, SGIP generates actionable, personalized learning roadmaps while fostering a collaborative skill-bartering marketplace.
 
-## Live Stats
+## 📸 Project Preview
+
+> Some Screenshots from the Platform.
+
+### Landing Page
+<p align="center">
+<img src="./docs/images/Landingpage.png" width="95%" alt="Landing Page"/>
+</p>
+
+### Student Dashboard
+<p align="center">
+<img src="./docs/images/Dashboard.png" width="95%" alt="Dashboard"/>
+</p>
+
+### AI Gap Analysis
+<p align="center">
+<img src="./docs/images/Gapanalysis.png" width="95%" alt="Gap Analysis"/>
+</p>
+
+### Skill Marketplace
+<p align="center">
+<img src="./docs/images/Marketplace.png" width="95%" alt="Marketplace"/>
+</p>
+
+---
+
+## Platform Metrics
 
 | Metric | Count |
 |--------|-------|
@@ -20,11 +60,11 @@ The Skill Gap Intelligence Platform (SGIP) is a comprehensive web application de
 |  Roadmaps Created | 13 |
 |  Skills in Database | 121 |
 |  Career Roles | 5 |
-| ⭐ Average Compatibility Score | 48.4% |
+|  Average Compatibility Score | 48.4% |
 
 *Stats fetched live from MongoDB at README generation time — June 26, 2026*
 
-## ✨ Features
+## Features
 
 -  **AI Resume Parsing**: Extracts skills directly from user resumes using LLaMA 3.3.
 -  **Gap Analysis (Role + JD mode)**: Calculates skill compatibility against predefined career roles or custom Job Descriptions.
@@ -37,7 +77,7 @@ The Skill Gap Intelligence Platform (SGIP) is a comprehensive web application de
 -  **Rate Limiting**: Defends endpoints against abuse with intelligent rate limiting.
 -  **PII Redaction**: Scrubs Personally Identifiable Information before interacting with LLMs.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
@@ -93,7 +133,7 @@ The Skill Gap Intelligence Platform (SGIP) is a comprehensive web application de
 | **Placement Officer** | Analytics and reporting | Monitor overall cohort progress and skill distributions. |
 | **Admin** | User management, role catalog, audit logs, full access | System configuration, moderation, log monitoring, role management. |
 
-## 🧠 AI Pipeline
+## AI Pipeline
 
 ```text
 Resume PDF ──► pdf2json ──► PII Redaction ──► Groq LLM (LLaMA 3.3) ──► Skill Array
@@ -104,7 +144,7 @@ Resume PDF ──► pdf2json ──► PII Redaction ──► Groq LLM (LLaMA 
     Roadmap ◄── AI Explanation (LLaMA 3.1) ◄── Compatibility Score ◄─────┘
 ```
 
-## 🔐 Security Features
+##  Security Features
 
 - JWT authentication with 7-day expiry
 - bcrypt password hashing (cost factor 10)
@@ -124,7 +164,7 @@ Resume PDF ──► pdf2json ──► PII Redaction ──► Groq LLM (LLaMA 
 - Password minimum: 8 characters, at least one letter and one number
 - Ownership enforcement on all user-scoped resources
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js (v18+)
